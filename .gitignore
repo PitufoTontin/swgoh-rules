@@ -23,5 +23,5 @@ yarn-debug.log*
 yarn-error.log*
 
 #character_images
-/src/data/character_images
+character_images
 /src/data/*.json
