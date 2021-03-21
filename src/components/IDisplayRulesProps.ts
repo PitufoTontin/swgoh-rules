@@ -1,4 +1,6 @@
+import IRuleset from "../data/models/IRuleset";
+
 export default interface IDisplayRulesProps {
-    rulesetId?: number;
+    ruleset?: IRuleset;
     edit: any;
 }

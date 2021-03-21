@@ -10,16 +10,13 @@ import DisplayRules from "./DisplayRules";
 import EditionMode from "./EditionMode";
 import EditRule from "./EditRule";
 import EditRuleset from "./EditRuleset";
+import IRuleset from "../data/models/IRuleset";
 
 const styles = mergeStyleSets({
   app: {
     margin: 20,
     backgroundColor: "cyan",
   },
-  // rulesGrid: {
-  //   display: "grid",
-  //   gridTemplateColumns: "repeat(2, 1fr)",
-  // },
 });
 
 const stackStyles: Partial<IStackStyles> = { root: { width: 650 } };
@@ -33,13 +30,13 @@ class App extends React.Component<IAppProps, IAppStatus> {
     this.state = {
       editionMode: EditionMode.Empty,
       ruleId: undefined,
-      rulesetId: undefined,
+      ruleset: undefined,
     };
   }
 
   private renderEditionSection = (): JSX.Element | null => {
-    if (this.state.editionMode === EditionMode.EditRule) {
-      return <EditRule />;
+    if (this.state.editionMode === EditionMode.EditRule && this.state.ruleset) {
+      return <EditRule ruleset={this.state.ruleset} />;
     }
 
     if (this.state.editionMode === EditionMode.EditRuleset) {
@@ -49,20 +46,14 @@ class App extends React.Component<IAppProps, IAppStatus> {
     return null;
   };
 
-  // public componentDidMount(): void {
-  //   this.setState({
-  //     charOptions: Data.getCharNamesOptions(),
-  //   });
-  // }
-
   private editRule = (editValue?: number) => {
     this.setState({ editionMode: EditionMode.EditRule, ruleId: editValue });
   };
 
-  private editRuleset = (editValue?: number) => {
+  private editRuleset = (editValue?: IRuleset) => {
     this.setState({
       editionMode: EditionMode.EditRuleset,
-      rulesetId: editValue,
+      ruleset: editValue,
     });
   };
 
@@ -72,7 +63,7 @@ class App extends React.Component<IAppProps, IAppStatus> {
         <Stack>
           <Stack horizontal styles={stackStyles}>
             <RulesManager edit={this.editRuleset} />
-            <DisplayRules edit={this.editRule} rulesetId={this.state.rulesetId} />
+            <DisplayRules edit={this.editRule} ruleset={this.state.ruleset} />
           </Stack>
 
           {this.renderEditionSection()}

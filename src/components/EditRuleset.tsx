@@ -9,6 +9,7 @@ import {
   ITooltipHostStyles,
   Slider,
   SpinButton,
+  Stack,
   TextField,
   TooltipHost,
 } from "@fluentui/react";
@@ -69,27 +70,47 @@ const EditRuleset: React.FunctionComponent = () => {
   const raritySliderOnChange = (value: number) => setRarityValue(value);
 
   const [relicValue, setRelicValue] = React.useState(5);
-  const relicSliderOnChange = (value: number) => setRelicValue(value);
+  const relicSliderOnChange = (value: number) => {
+    setRelicValue(value);
+    if (value > 0) {
+      selectGearLevel("13");
+    }
+  };
 
   const [levelValue, setLevelValue] = React.useState(85);
-  const levelSpinOnChange = (value: string) => setLevelValue(Number(value));
+  const levelSpinUpOnChange = (value: string) => {
+    const newValue: number = Number(value);
+    if(newValue < 85) {
+      setLevelValue(newValue + 1);
+    }    
+  }
+  const levelSpinDownOnChange = (value: string) => {
+    const newValue: number = Number(value);
+    if(newValue > 1) {
+      setLevelValue(newValue - 1);
+    }   
+  }
 
-  const [selectedGearLevel, selectGearLevel] = React.useState<string>("XII");
+  const [selectedGearLevel, selectGearLevel] = React.useState<string>("13");
   const changeGearLevelCombobox = (
     event: React.FormEvent<IComboBox>,
     option?: IComboBoxOption
   ) => {
     if (option) {
       selectGearLevel(option.key.toString());
+
+      if(Number(option.key) < 13) {
+        setRelicValue(0);
+      }
     }
   };
 
   const [selectedRuleGroup, selectRuleGroup] = React.useState<number | null>(
     null
   );
-  const [ruleGroupsOptions] = React.useState<IComboBoxOption[]>(
-    Data.getRuleGroupsOptions()
-  );
+  const [ruleGroupsOptions, setRuleGroupsOptions] = React.useState<
+    IComboBoxOption[]
+  >(Data.getRuleGroupsOptions());
   const changeRuleGroupCombobox = (
     event: React.FormEvent<IComboBox>,
     option?: IComboBoxOption
@@ -99,12 +120,27 @@ const EditRuleset: React.FunctionComponent = () => {
     }
   };
 
+  const [errorEmptyName, setErrorEmptyName] = React.useState("");
+
+  const setDefaultValues = () => {
+    setRulesetName("");
+    setRarityValue(7);
+    setLevelValue(85);
+    selectGearLevel("13");
+    setRelicValue(5);
+  };
+
   const saveRuleset = React.useCallback(() => {
+    if (!rulesetName) {
+      setErrorEmptyName("Debe introducir un nombre para el conjunto de reglas");
+      return;
+    }
+
     let newRuleset: IRuleset = {
       Id: Data.getNewRulesetId(),
       Name: rulesetName ? rulesetName : "",
       DefaultStars: rarityValue,
-      DefaulLevel: levelValue,
+      DefaultLevel: levelValue,
       DefaultGearLevel: Number(selectedGearLevel),
       DefaultRelicLevel: relicValue,
       RuleGroup: selectedRuleGroup ? selectedRuleGroup : undefined,
@@ -112,6 +148,10 @@ const EditRuleset: React.FunctionComponent = () => {
     };
 
     Data.saveRuleset(newRuleset);
+    if (selectedTypeKey === RulesetType.RuleGroup) {
+      setRuleGroupsOptions(Data.getRuleGroupsOptions());
+    }
+    setDefaultValues();
   }, [
     rarityValue,
     rulesetName,
@@ -131,76 +171,82 @@ const EditRuleset: React.FunctionComponent = () => {
         onChange={onChangeType}
         label="Elige conjunto/grupo de reglas a crear"
       />
-      <TextField
-        label="Nombre"
-        placeholder="Nombre"
-        required
-        onChange={(event, newValue) => setRulesetName(newValue)}
-      />
-      <Slider
-        label="Estrellas"
-        min={1}
-        max={7}
-        defaultValue={7}
-        value={rarityValue}
-        showValue
-        snapToStep
-        onChange={raritySliderOnChange}
-      />
-      <SpinButton
-        defaultValue="85"
-        label={"Nivel"}
-        min={1}
-        max={85}
-        step={1}
-        value={levelValue.toString()}
-        incrementButtonAriaLabel={"Incrementa el valor en 1"}
-        decrementButtonAriaLabel={"Decrementa el valor en 1"}
-        onIncrement={levelSpinOnChange}
-        onDecrement={levelSpinOnChange}
-      />
-      <ComboBox
-        label="Nivel de Equipo"
-        allowFreeform={true}
-        autoComplete={"on"}
-        options={gearLevelOptions}
-        onChange={changeGearLevelCombobox}
-        selectedKey={selectedGearLevel}
-        defaultSelectedKey="12"
-      />
-      <Slider
-        label="Reliquia"
-        min={1}
-        max={8}
-        defaultValue={5}
-        value={relicValue}
-        showValue
-        snapToStep
-        onChange={relicSliderOnChange}
-      />
-      {selectedTypeKey === RulesetType.RuleSet ? (
-        <ComboBox
-          label="Grupo de Reglas"
-          allowFreeform={true}
-          autoComplete={"on"}
-          options={ruleGroupsOptions}
-          onChange={changeRuleGroupCombobox}
-          selectedKey={selectedRuleGroup}
-        />
-      ) : null}
-      <TooltipHost
-        content="Guardar"
-        id={savetooltipId}
-        calloutProps={calloutProps}
-        styles={hostStyles}
-      >
-        <IconButton
-          iconProps={saveIcon}
-          title="Guardar"
-          ariaLabel="Guardar"
-          onClick={saveRuleset}
-        />
-      </TooltipHost>
+      <Stack horizontal tokens={{ childrenGap: 50 }}>
+        <Stack>
+          <TextField
+            value={rulesetName}
+            label="Nombre"
+            placeholder="Nombre"
+            required
+            onChange={(event, newValue) => setRulesetName(newValue)}
+            errorMessage={errorEmptyName}
+          />
+          {selectedTypeKey === RulesetType.RuleSet ? (
+            <ComboBox
+              label="Grupo de Reglas"
+              allowFreeform={true}
+              autoComplete={"on"}
+              options={ruleGroupsOptions}
+              onChange={changeRuleGroupCombobox}
+              selectedKey={selectedRuleGroup}
+            />
+          ) : null}
+        </Stack>
+        <Stack>
+          <Slider
+            label="Estrellas"
+            min={1}
+            max={7}
+            value={rarityValue}
+            showValue
+            snapToStep
+            onChange={raritySliderOnChange}
+          />
+          <SpinButton
+            label={"Nivel"}
+            min={1}
+            max={85}
+            step={1}
+            value={levelValue.toString()}
+            incrementButtonAriaLabel={"Incrementa el valor en 1"}
+            decrementButtonAriaLabel={"Decrementa el valor en 1"}
+            onIncrement={levelSpinUpOnChange}
+            onDecrement={levelSpinDownOnChange}
+          />
+        </Stack>
+        <Stack>
+          <ComboBox
+            label="Nivel de Equipo"
+            allowFreeform={true}
+            autoComplete={"on"}
+            options={gearLevelOptions}
+            onChange={changeGearLevelCombobox}
+            selectedKey={selectedGearLevel}
+          />
+          <Slider
+            label="Reliquia"
+            min={0}
+            max={8}
+            value={relicValue}
+            showValue
+            snapToStep
+            onChange={relicSliderOnChange}
+          />
+        </Stack>
+        <TooltipHost
+          content="Guardar"
+          id={savetooltipId}
+          calloutProps={calloutProps}
+          styles={hostStyles}
+        >
+          <IconButton
+            iconProps={saveIcon}
+            title="Guardar"
+            ariaLabel="Guardar"
+            onClick={saveRuleset}
+          />
+        </TooltipHost>
+      </Stack>
     </div>
   );
 };

@@ -4,7 +4,7 @@ export default interface IRuleset {
     Id: number;
     Name: string;
     DefaultStars: number;
-    DefaulLevel: number;
+    DefaultLevel: number;
     DefaultGearLevel: number;
     DefaultRelicLevel: number;
     RuleGroup?: number;
